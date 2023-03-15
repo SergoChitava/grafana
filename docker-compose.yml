@@ -14,14 +14,18 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - grafana-storage:/var/lib/grafana 
+      - grafana-storage:/var/lib/grafana
 
   alertmanager:
-    image: prom/alertmanager
+    image: prom/alertmanager:v0.12.0
     ports:
       - "9093:9093"
     volumes:
-      - ./config.yml
+      - ./alertmanager/:/etc/alertmanager/
+    restart: always
+    command:
+      - '-config.file=/etc/alertmanager/config.yml'
+      - '-storage.path=/alertmanager'
   nodeexporter:
     image: prom/node-exporter:v0.18.1
     container_name: nodeexporter
@@ -37,5 +41,17 @@ services:
     restart: unless-stopped
     ports:
       - "9100:9100"
+  db:
+    image: postgres
+    environment:
+      POSTGRES_PASSWORD: mypassword
+
+  exporter:
+    image: wrouesnel/postgres_exporter
+    environment:
+      DATA_SOURCE_NAME: "postgresql://postgres:mypassword@db:5432/postgres?sslmode=disable"
+    ports:
+      - "9187:9187"
+
 volumes:
   grafana-storage:
